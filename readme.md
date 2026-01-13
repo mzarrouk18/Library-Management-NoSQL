@@ -1,16 +1,60 @@
-# 📚 Système de Gestion de Bibliothèque (Cassandra & Tkinter)
+# 📚 Library Management System - Cassandra & Python GUI
 
-Ce projet est une application complète de gestion de bibliothèque capable de gérer plus de 150 000 entrées grâce à la puissance de **Apache Cassandra**.
+Ce projet est une application complète de gestion de bibliothèque universitaire conçue pour démontrer la puissance de **Apache Cassandra** combinée à une interface **Python Tkinter**. 
 
-## 🚀 Fonctionnalités
-- **Performance NoSQL** : Recherche instantanée parmi 100k livres et 50k étudiants.
-- **Interface Graphique** : GUI intuitive développée avec Tkinter.
-- **Gestion des Flux** : Emprunts et retours gérés avec des Batch Statements pour la cohérence des données.
-- **Statistiques** : Utilisation des compteurs Cassandra pour le suivi global.
+L'application gère plus de **150 000 données** (livres et étudiants) avec des performances de recherche instantanées.
 
-## 🛠️ Installation
-1. Cloner le projet : `git clone https://github.com/mzarrouk18/Système_de_Gestion_de_Bibliothèque_Numérique.git`
-2. Installer les dépendances : `pip install -r requirements.txt`
-3. Lancer Cassandra (Docker recommandé).
-4. Générer les données : `python scripts/generate_data.py`
-5. Lancer l'app : `python CLI/app_tk.py`
+---
+
+## 🎯 Objectifs du Projet
+* Déployer une base de données NoSQL distribuée (**Cassandra**) via Docker.
+* Modéliser les données selon les principes de dénormalisation (Query-First Design).
+* Développer une interface graphique (GUI) intuitive pour les bibliothécaires.
+* Gérer les flux d'emprunts et les statistiques en temps réel.
+
+---
+
+## 📦 Architecture Technique
+
+### 1️⃣ Infrastructure (Docker)
+Le projet utilise **Docker Compose** pour garantir un environnement reproductible sans dépendances locales complexes.
+* **Cassandra 4.1** : Moteur de base de données.
+* **Ports utilisés** : 
+    * `9042` : Cassandra (Communication Python).
+    * `9160` : CQL Web Editor (Interface d'administration).
+
+### 2️⃣ Base de données (CQL)
+La modélisation est optimisée pour la lecture :
+* `book_by_isbn` : Recherche rapide par identifiant unique.
+* `books_by_author` / `books_by_category` : Tables dénormalisées pour le filtrage.
+* `global_stats` : Utilisation des types `counter` pour les statistiques globales.
+
+### 3️⃣ Application (Python)
+* **Driver Cassandra** : Pour les requêtes asynchrones et les Batch Statements.
+* **Tkinter** : Interface utilisateur riche.
+* **Tabulate & Colorama** : Pour les outils de diagnostic en CLI.
+
+---
+
+## 🛠️ Installation et Lancement
+
+### Prérequis
+* Docker & Docker Compose
+* Python 3.10+
+
+### Étape 1 : Démarrer la base de données
+```bash
+docker-compose up -d
+
+### Étape 2 : Générer les données
+```bash
+pip install -r requirements.txt
+python scripts/generate_data.py
+
+### Étape 3 : Lancer l'application
+```bash
+python app_bibliotheque.py
+
+---
+
+Cloner le projet : `git clone https://github.com/mzarrouk18/Library-Management-NoSQL.git`

@@ -2,7 +2,7 @@
 
 Ce projet est une application complète de gestion de bibliothèque universitaire conçue pour démontrer la puissance de **Apache Cassandra** combinée à une interface **Python Tkinter**. 
 
-L'application gère plus de **150 000 données** (livres et étudiants) avec des performances de recherche instantanées.
+L'application gère plus de **15 000 données** (livres et étudiants) avec des performances de recherche instantanées.
 
 ---
 
@@ -42,17 +42,13 @@ La modélisation est optimisée pour la lecture :
 * Docker & Docker Compose
 * Python 3.10+
 
-### Étape 1 : Démarrer la base de données
+### Étapes clés
 ```bash
 docker-compose up -d
 
-### Étape 2 : Générer les données
-```bash
 pip install -r requirements.txt
 python scripts/generate_data.py
 
-### Étape 3 : Lancer l'application
-```bash
 python app_bibliotheque.py
 
 ---

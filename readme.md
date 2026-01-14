@@ -16,6 +16,24 @@ L'application gère plus de **15 000 données** (livres et étudiants) avec des 
 
 ## 📦 Architecture Technique
 
+.
+├── CLI/                   # Interfaces utilisateur
+│   ├── app_tk.py          # Application graphique (GUI) avec Tkinter
+│   └── main.py            # Application en ligne de commande (CLI) avec Click
+├── conf/                  # Configuration système
+│   └── database.py        # Gestion de la connexion au cluster Cassandra
+├── Gestion_des_livres/    # Logique métier et requêtes CQL
+│   ├── books.py           # Gestion du catalogue et recherches
+│   ├── users.py           # Inscription et listing des étudiants
+│   └── borrows.py         # Logique d'emprunt et de retour de livres
+├── schema/                # Définition de la base de données
+│   └── schema.cql         # Scripts de création des tables et du keyspace
+├── .gitignore             # Fichiers à exclure du dépôt Git
+├── docker-compose.yml     # Déploiement du conteneur Cassandra
+├── readme.md              # Documentation du projet
+└── requirements.txt       # Dépendances Python nécessaires
+
+
 ### 1️⃣ Infrastructure (Docker)
 Le projet utilise **Docker Compose** pour garantir un environnement reproductible sans dépendances locales complexes.
 * **Cassandra 4.1** : Moteur de base de données.

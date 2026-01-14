@@ -10,3 +10,6 @@ def create_user(session, nom, email):
     print(f"👤 Utilisateur créé : {nom} (ID: {user_id})")
     return user_id
 
+def list_all_users(session):
+    query = "SELECT user_id, nom, email, join_date FROM users_by_id LIMIT 100"
+    return session.execute(query)

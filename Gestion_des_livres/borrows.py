@@ -1,5 +1,7 @@
 from cassandra.query import BatchStatement
 from datetime import datetime
+from click import UUID
+from uuid import UUID
 
 def borrow_book(session, user_id, isbn, title):
     batch = BatchStatement()
@@ -27,25 +29,36 @@ def increment_total_books(session):
     query = "UPDATE global_stats SET stat_value = stat_value + 1 WHERE stat_name = 'total_loans'"
     session.execute(query)
     
-# Dans Gestion_des_livres/borrows.py
 
-def return_book_logic(session, user_id, isbn):
+def return_book_logic(session, user_id, isbn, loan_date):
     """
-    Logique de retour : 
-    1. Supprime le livre de la table des livres sortis.
-    2. Met à jour la date de retour dans l'historique de l'utilisateur.
+    Logique de retour sans ALLOW FILTERING.
+    Nécessite la clé primaire complète : user_id + loan_date.
     """
-    
-    # 1. On supprime l'emprunt actif
-    delete_query = "DELETE FROM non_returned_book WHERE isbn = %s"
-    
-    # 2. On met à jour l'historique (Note: loan_date fait partie de la PK, 
-    # donc pour un vrai historique pro, on cherche souvent la ligne d'abord)
-    # Ici, on simplifie en se concentrant sur la table de suivi.
-    
     try:
-        session.execute(delete_query, (isbn,))
+        # 1. Conversion des types
+        uid_conv = UUID(user_id) if isinstance(user_id, str) else user_id
+        # Assure-toi que loan_date est bien un objet datetime
+        return_date = datetime.now()
+
+        # 2. Mise à jour de l'historique utilisateur (UPDATE au lieu de DELETE)
+        # On utilise la clé primaire (user_id, loan_date) : recherche instantanée
+        update_user_query = """
+            UPDATE borrows_by_user 
+            SET return_date = %s 
+            WHERE user_id = %s AND loan_date = %s
+        """
+        session.execute(update_user_query, (return_date, uid_conv, loan_date))
+
+        # 3. Suppression des suivis actifs (car le livre est rendu)
+        # Suppression par partition key (isbn)
+        #session.execute("DELETE FROM non_returned_book WHERE isbn = %s", (isbn,))
+        
+        # Suppression par clé complète (isbn, loan_date)
+        session.execute("DELETE FROM borrows_by_book WHERE isbn = %s AND loan_date = %s", (isbn, loan_date))
+
         return True
+
     except Exception as e:
-        print(f"❌ Erreur Cassandra : {e}")
+        print(f"❌ Erreur lors du retour (sans filtrage) : {e}")
         return False

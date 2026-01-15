@@ -16,7 +16,7 @@ L'application gère plus de **15 000 données** (livres et étudiants) avec des 
 
 ## 📦 Architecture Technique
 
-![Architecture](./archi.png)
+![Architecture](./schema/archi.png)
 
 
 ### 1️⃣ Infrastructure (Docker)

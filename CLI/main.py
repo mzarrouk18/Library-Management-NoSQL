@@ -28,29 +28,33 @@ def students():
     pass
 
 @students.command()
-@click.option('--fname', prompt='Prénom', help='Prénom de l\'étudiant')
-@click.option('--lname', prompt='Nom', help='Nom de l\'étudiant')
-@click.option('--email', prompt='Email', help='Email de l\'étudiant')
+@click.option('--fname', prompt='Prénom')
+@click.option('--lname', prompt='Nom')
+@click.option('--email', prompt='Email')
 def add(fname, lname, email):
-    """Inscrire un nouvel étudiant (comme dans l'onglet GESTION UTILISATEURS)"""
+    """Inscrire un nouvel étudiant (Identique à l'onglet GESTION UTILISATEURS)"""
     try:
-        # On passe fname et lname séparément comme dans app_tk.py
-        user_id = create_user(session, fname, lname, email)
+        # On concatène pour correspondre à la logique de la GUI
+        nom_complet = f"{fname} {lname}"
+        user_id = create_user(session, nom_complet, email)
         click.echo(click.style(f"✅ Utilisateur créé ! ID : {user_id}", fg='green', bold=True))
     except Exception as e:
         click.echo(click.style(f"❌ Erreur : {e}", fg='red'))
 
 @students.command()
-def list():
-    """Afficher tous les étudiants enregistrés"""
+def list_users():
+    """Afficher les étudiants triés par date (Tri Python comme app_tk)"""
     try:
-        users = list_all_users(session)
-        data = [[u.user_id, u.nom, u.email, u.join_date] for u in users]
+        users = list(list_all_users(session))
+        # Tri applicatif pour contourner les limitations de Cassandra
+        sorted_users = sorted(users, key=lambda x: x.join_date, reverse=True)
+        
+        data = [[u.user_id, u.nom, u.email, u.join_date] for u in sorted_users]
         click.echo("\n" + tabulate(data, headers=["ID", "Nom", "Email", "Date Adhésion"], tablefmt="psql"))
     except Exception as e:
         click.echo(click.style(f"❌ Erreur : {e}", fg='red'))
 
-# ========== MODULE EMPRUNTS & RETOURS (Version sans ALLOW FILTERING) ==========
+# ========== MODULE EMPRUNTS & RETOURS ==========
 
 @cli.group()
 def loans():
@@ -60,37 +64,35 @@ def loans():
 @loans.command()
 @click.option('--uid', prompt='UUID Étudiant')
 def check(uid):
-    """Lister les emprunts en cours d'un étudiant (Action charger emprunts GUI)"""
+    """Lister UNIQUEMENT les emprunts en cours (Filtrage Python)"""
     try:
-        query = "SELECT isbn, loan_date, book_title FROM borrows_by_user WHERE user_id = %s"
+        # On récupère return_date pour filtrer en local comme dans action_charger_emprunts_etudiant
+        query = "SELECT isbn, loan_date, book_title, return_date FROM borrows_by_user WHERE user_id = %s"
         rows = session.execute(query, [UUID(uid)])
-        data = [[row.isbn, row.book_title, row.loan_date] for row in rows]
+        
+        # Filtrage : On ne garde que ceux qui n'ont pas de date de retour
+        data = [[row.isbn, row.book_title, row.loan_date] for row in rows if row.return_date is None]
         
         if data:
             click.echo("\n" + tabulate(data, headers=["ISBN", "Titre", "Date Emprunt"], tablefmt="fancy_grid"))
         else:
-            click.echo(click.style("ℹ️ Aucun emprunt en cours pour cet étudiant.", fg='yellow'))
+            click.echo(click.style("ℹ️ Aucun emprunt en cours (tous les livres sont rendus).", fg='yellow'))
     except Exception as e:
         click.echo(click.style(f"❌ Erreur : {e}", fg='red'))
 
 @loans.command()
 @click.option('--uid', prompt='UUID Étudiant')
 @click.option('--isbn', prompt='ISBN Livre')
-# On ajoute la date en option pour éviter le filtrage Cassandra
-@click.option('--date', prompt='Date Emprunt (YYYY-MM-DD HH:MM:SS)', help='Date exacte de l\'emprunt')
+@click.option('--date', prompt='Date Emprunt (YYYY-MM-DD HH:MM:SS)')
 def back(uid, isbn, date):
-    """Marquer comme Rendu (Action Retour GUI utilisant la Clé de Clustering)"""
+    """Marquer comme Rendu (Triplet complet pour éviter ALLOW FILTERING)"""
     try:
-        # Conversion de la date string en objet datetime pour Cassandra
         loan_date = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
-        
-        # Appel de la logique avec le triplet complet : UID, ISBN, DATE
+        # Utilisation de la logique commune return_book_logic
         if return_book_logic(session, UUID(uid), isbn, loan_date):
-            click.echo(click.style(f"✅ Succès : Le livre {isbn} a été rendu.", fg='green', bold=True))
+            click.echo(click.style(f"✅ Succès : Le livre {isbn} a été marqué comme rendu.", fg='green', bold=True))
         else:
-            click.echo(click.style("❌ Échec du retour.", fg='red'))
-    except ValueError:
-        click.echo(click.style("❌ Format de date invalide. Utilisez YYYY-MM-DD HH:MM:SS", fg='red'))
+            click.echo(click.style("❌ Échec : Vérifiez les informations saisies.", fg='red'))
     except Exception as e:
         click.echo(click.style(f"❌ Erreur : {e}", fg='red'))
 

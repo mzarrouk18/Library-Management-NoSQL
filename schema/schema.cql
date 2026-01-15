@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS reservations(
 	PRIMARY KEY (isbn, reservation_date)
 	);
 
--- Q9: Statistiques globales (Compteurs)
+-- Statistiques globales (Compteurs)
 CREATE TABLE IF NOT EXISTS global_stats (
     stat_name text PRIMARY KEY,
     stat_value counter

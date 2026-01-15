@@ -227,6 +227,7 @@ class LibraryAppGUI:
     def action_creer_utilisateur(self):
         fname = self.ent_fname.get().strip()
         lname = self.ent_lname.get().strip()
+        nom = f"{fname} {lname}"
         email = self.ent_email.get().strip()
 
         if not fname or not lname or not email:
@@ -235,7 +236,7 @@ class LibraryAppGUI:
 
         try:
             # Appel de ta fonction existante dans Gestion_des_livres/users.py
-            new_id = create_user(self.session, fname, lname, email)
+            new_id = create_user(self.session,nom, email)
             messagebox.showinfo("Succès", f"Utilisateur créé !\nID : {new_id}")
             # Nettoyer les champs
             self.ent_fname.delete(0, tk.END); self.ent_lname.delete(0, tk.END); self.ent_email.delete(0, tk.END)
@@ -251,7 +252,11 @@ class LibraryAppGUI:
         try:
             from Gestion_des_livres.users import list_all_users # Import local ou en haut du fichier
             users = list_all_users(self.session)
-            for u in users:
+            # Convertir en liste pour pouvoir trier
+            users_list = list(users)
+            # Trier la liste par join_date de manière décroissante
+            sorted_users = sorted(users_list, key=lambda x: x.join_date, reverse=True)
+            for u in sorted_users:
                 self.tree_users.insert("", "end", values=(u.user_id, u.nom, u.email, u.join_date))
         except Exception as e:
             messagebox.showerror("Erreur", f"Impossible de charger les utilisateurs : {e}")

@@ -38,11 +38,10 @@ def return_book_logic(session, user_id, isbn, loan_date):
     try:
         # 1. Conversion des types
         uid_conv = UUID(user_id) if isinstance(user_id, str) else user_id
-        # Assure-toi que loan_date est bien un objet datetime
         return_date = datetime.now()
 
         # 2. Mise à jour de l'historique utilisateur (UPDATE au lieu de DELETE)
-        # On utilise la clé primaire (user_id, loan_date) : recherche instantanée
+        # On utilise la clé primaire (user_id, loan_date) pour cibler la ligne exacte
         update_user_query = """
             UPDATE borrows_by_user 
             SET return_date = %s 
@@ -52,10 +51,8 @@ def return_book_logic(session, user_id, isbn, loan_date):
 
         # 3. Suppression des suivis actifs (car le livre est rendu)
         # Suppression par partition key (isbn)
-        #session.execute("DELETE FROM non_returned_book WHERE isbn = %s", (isbn,))
+        session.execute("DELETE FROM non_returned_book WHERE isbn = %s", (isbn,))
         
-        # Suppression par clé complète (isbn, loan_date)
-        session.execute("DELETE FROM borrows_by_book WHERE isbn = %s AND loan_date = %s", (isbn, loan_date))
 
         return True
 

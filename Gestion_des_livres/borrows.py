@@ -4,21 +4,30 @@ from click import UUID
 from uuid import UUID
 
 def borrow_book(session, user_id, isbn, title):
-    batch = BatchStatement()
-    loan_date = datetime.now()
+    try:
+        batch = BatchStatement()
+        loan_date = datetime.now()
 
-    # 1. Historique utilisateur
-    batch.add("INSERT INTO borrows_by_user (user_id, loan_date, isbn, book_title) VALUES (%s, %s, %s, %s)", 
-              (user_id, loan_date, isbn, title))
-    # 2. Historique livre
-    batch.add("INSERT INTO borrows_by_book (isbn, loan_date, user_id, title) VALUES (%s, %s, %s, %s)", 
-              (isbn, loan_date, user_id, title))
-    # 3. Liste des livres sortis (suivi)
-    batch.add("INSERT INTO non_returned_book (isbn, title, loan_date, user_id) VALUES (%s, %s, %s, %s)", 
-              (isbn, title, loan_date, user_id))
+        # 1. Historique utilisateur
+        batch.add("INSERT INTO borrows_by_user (user_id, loan_date, isbn, book_title) VALUES (%s, %s, %s, %s)", 
+                  (user_id, loan_date, isbn, title))
+        # 2. Historique livre
+        batch.add("INSERT INTO borrows_by_book (isbn, loan_date, user_id, title) VALUES (%s, %s, %s, %s)", 
+                  (isbn, loan_date, user_id, title))
+        # 3. Liste des livres sortis (suivi)
+        batch.add("INSERT INTO non_returned_book (isbn, title, loan_date, user_id) VALUES (%s, %s, %s, %s)", 
+                  (isbn, title, loan_date, user_id))
 
-    session.execute(batch)
-    print(f"📖 Emprunt enregistré pour '{title}'")
+        session.execute(batch)
+        
+        # --- AJOUT : Mise à jour du compteur ---
+        increment_total_books(session) 
+        
+        print(f"📖 Emprunt enregistré pour '{title}'")
+        return True  # <--- INDISPENSABLE pour que le CLI affiche "Succès"
+    except Exception as e:
+        print(f"❌ Erreur borrow_book: {e}")
+        return False
     
 def add_reservation(session, isbn, user_id):
     query = "INSERT INTO reservations (isbn, reservation_date, user_id, status) VALUES (%s, %s, %s, %s)"

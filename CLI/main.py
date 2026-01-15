@@ -79,6 +79,34 @@ def check(uid):
             click.echo(click.style("ℹ️ Aucun emprunt en cours (tous les livres sont rendus).", fg='yellow'))
     except Exception as e:
         click.echo(click.style(f"❌ Erreur : {e}", fg='red'))
+        
+@loans.command()
+@click.option('--uid', prompt='UUID Étudiant', help='ID unique de l\'étudiant')
+@click.option('--isbn', prompt='ISBN Livre', help='ISBN du livre à emprunter')
+def borrow(uid, isbn):
+    """Enregistrer un nouvel emprunt avec récupération automatique du titre"""
+    try:
+        # 1. On cherche d'abord le livre pour obtenir son titre (comme dans la GUI)
+        book = find_book_by_isbn(session, isbn)
+        
+        if not book:
+            click.echo(click.style(f"❌ Erreur : Le livre avec l'ISBN {isbn} n'existe pas.", fg='red'))
+            return
+
+        # 2. On récupère le titre
+        titre = book.title
+        click.echo(f"📖 Livre trouvé : {titre}")
+
+        # 3. On effectue l'emprunt avec le titre récupéré
+        # Note : Vérifie si ta fonction borrow_book prend (session, uid, isbn, titre) 
+        # ou si elle cherche le titre elle-même. 
+        if borrow_book(session, UUID(uid), isbn,titre):
+            click.echo(click.style(f"✅ Succès : '{titre}' a été emprunté par {uid}.", fg='green', bold=True))
+        else:
+            click.echo(click.style("❌ Échec : L'enregistrement a échoué dans Cassandra.", fg='red'))
+            
+    except Exception as e:
+        click.echo(click.style(f"❌ Erreur technique : {e}", fg='red'))
 
 @loans.command()
 @click.option('--uid', prompt='UUID Étudiant')
